@@ -1,0 +1,66 @@
+import numpy as np
+import pytest
+
+from misfold.diagnostics import Status, classify
+from misfold.engine import SimulationResult, reference_energy, simulate
+
+
+def _r(final, uphill_acc, uphill_att=100):
+    return SimulationResult(np.zeros((3, 3), int), [final], 50, 100, uphill_acc, uphill_att)
+
+
+def test_native():
+    assert classify(_r(-4.0, 10), -4.5, 1.2, 7.0).status is Status.NATIVE
+
+
+def test_denatured():
+    assert classify(_r(-0.5, 60), -4.5, 4.5, 7.0).status is Status.DENATURED
+
+
+def test_trapped():
+    assert classify(_r(-1.0, 5), -4.5, 0.2, 7.0).status is Status.TRAPPED
+
+
+def test_low_temperature_neutral_moves_do_not_count_as_denatured():
+    # Plenty of accepted moves overall, but almost no uphill ones: cold, not hot.
+    r = SimulationResult(np.zeros((3, 3), int), [-1.0], 90, 100, 0, 40)
+    assert classify(r, -4.5, 0.1, 7.0).status is Status.TRAPPED
+
+
+def test_no_core():
+    assert classify(_r(0.0, 50), 0.0, 1.2, 7.0).status is None
+
+
+def test_message_contains_numbers():
+    m = classify(_r(-1.0, 5), -4.5, 0.2, 7.0).message
+    assert "-1.00" in m and "-4.50" in m and "0.20" in m and "7.00" in m
+
+
+def test_acid_denaturation_message():
+    m = classify(_r(-0.5, 60), -4.5, 1.2, 2.0).message
+    assert "acid" in m.lower()
+
+
+def test_base_denaturation_message():
+    m = classify(_r(-0.5, 60), -4.5, 1.2, 12.0).message
+    assert "base" in m.lower()
+
+
+@pytest.mark.parametrize(
+    "seq, t, ph, expected",
+    [
+        ("HKHPHDHPKHHDH", 0.2, 7.0, Status.TRAPPED),
+        ("HKHPHDHPKHHDH", 1.2, 7.0, Status.NATIVE),
+        ("HKHPHDHPKHHDH", 4.5, 7.0, Status.DENATURED),
+        ("KDKDHHKDKDHHKD", 1.2, 7.0, Status.NATIVE),
+        ("KDKDHHKDKDHHKD", 1.2, 2.0, Status.DENATURED),
+    ],
+)
+def test_calibration(seq, t, ph, expected):
+    ref = reference_energy(seq)
+    hits = sum(
+        classify(simulate(seq, t, ph, 300, np.random.default_rng(s)), ref, t, ph).status
+        is expected
+        for s in range(10)
+    )
+    assert hits >= 6

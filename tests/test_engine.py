@@ -23,8 +23,8 @@ def test_accept_uphill_rate_matches_boltzmann():
 
 def test_history_length_and_energy_moves():
     r = simulate(SEQ, 1.2, 7.0, 300, np.random.default_rng(0))
-    assert len(r.energy_history) == 300
-    assert r.attempted == 300 and r.accepted > 0
+    assert len(r.energy_history) == 300  # one entry per sweep
+    assert r.attempted == 300 * len(SEQ) and r.accepted > 0
     assert min(r.energy_history) < 0  # chain actually folds
     assert r.energy_history[-1] == pytest.approx(energy(r.coords, interaction_matrix(SEQ, 7.0)))
 
@@ -57,3 +57,16 @@ def test_max_length_is_interactive():
     simulate(seq, 1.2, 7.0, 1000, np.random.default_rng(0))
     reference_energy(seq)
     assert time.perf_counter() - t0 < 10.0
+
+
+def test_default_conditions_fold():  # reduced temperature units: T=1.2 is below folding
+    finals = [simulate(SEQ, 1.2, 7.0, 300, np.random.default_rng(s)).energy_history[-1]
+              for s in range(5)]
+    assert np.mean(finals) <= -3.0
+
+
+def test_uphill_acceptance_tracks_temperature():
+    cold = simulate(SEQ, 0.1, 7.0, 300, np.random.default_rng(0))
+    hot = simulate(SEQ, 4.5, 7.0, 300, np.random.default_rng(0))
+    assert cold.uphill_attempted > 0 and hot.uphill_attempted > 0
+    assert cold.uphill_acceptance < 0.05 < hot.uphill_acceptance
