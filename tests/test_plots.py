@@ -15,7 +15,8 @@ def _drawn_colors(fig):
     # 3D scatter colours are only complete after a draw, and then depth-sorted,
     # so compare colour counts rather than order.
     FigureCanvasAgg(fig).draw()
-    return Counter(to_hex(c) for c in fig.axes[0].collections[0].get_facecolors())
+    beads = next(c for c in fig.axes[0].collections if type(c).__name__ == "Path3DCollection")
+    return Counter(to_hex(c) for c in beads.get_facecolors())
 
 
 def test_structure_title():
@@ -85,6 +86,31 @@ def test_smooth_backbone_rounds_corners():
     assert not np.isclose(mid_first_bond[1], 0)  # bows away from the straight lattice bond
 
 
-def test_structure_draws_smoothed_backbone():
-    ax = plot_structure(C, "HPKD", 1.2, 7.0).axes[0]
-    assert len(ax.lines[0].get_data_3d()[0]) > len(C)
+def test_structure_draws_cartoon_tube():
+    fig = plot_structure(C, "HPKD", 1.2, 7.0)
+    FigureCanvasAgg(fig).draw()  # 3D polygons are projected at draw time
+    ax = fig.axes[0]
+    tubes = [c for c in ax.collections if type(c).__name__ == "Poly3DCollection"]
+    assert len(tubes) == 1 and len(tubes[0].get_paths()) > 100
+    assert [t.get_text() for t in ax.texts] == ["N", "C"]
+
+
+def test_tube_mesh_rings_at_radius():
+    from misfold.plots import smooth_backbone, tube_mesh
+
+    curve = smooth_backbone(C)
+    x, y, z = tube_mesh(curve, radius=0.2, sides=12)
+    assert x.shape == (len(curve), 13)
+    ring = np.stack([x, y, z], axis=-1)
+    distances = np.linalg.norm(ring - curve[:, None, :], axis=-1)
+    assert np.allclose(distances, 0.2)
+
+
+def test_backbone_gradient_red_white_blue():
+    from misfold.plots import backbone_gradient
+
+    g = backbone_gradient(101)
+    start, middle, end = g[0], g[50], g[-1]
+    assert start[0] > 0.7 and start[2] < 0.35  # red at the N-terminus
+    assert min(middle[:3]) > 0.85  # near white mid-chain
+    assert end[2] > 0.7 and end[0] < 0.35  # blue at the C-terminus

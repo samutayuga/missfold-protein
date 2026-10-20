@@ -50,12 +50,14 @@ message in the sidebar and nothing runs.
 
 ### Output
 
-- **3D Backbone Conformation** (left): beads coloured by residue type (H red, P blue,
-  K purple, D orange) and joined by the backbone. Beads sit exactly on their lattice
-  sites; the backbone between them is drawn as a smooth Catmull-Rom curve
-  (`smooth_backbone` in `misfold/plots.py`), so the 90° lattice corners read like a
-  protein cartoon. This only affects the drawing, not the physics. The legend lists only the types
-  present.
+- **3D Backbone Conformation** (left): the chain is drawn in the style of VMD's
+  NewCartoon (as on the [UIUC protein-folding pages](https://www.ks.uiuc.edu/Research/folding/)):
+  a shaded tube coloured red → white → blue from the N-terminus to the C-terminus,
+  with `N`/`C` labels at the ends. Beads on the tube show the residue type (H red,
+  P blue, K purple, D orange). Beads sit exactly on their lattice sites; the tube
+  follows a smooth Catmull-Rom curve through them (`smooth_backbone`, `tube_mesh` in
+  `misfold/plots.py`). This only affects the drawing, not the physics. There are no
+  helix or sheet shapes because a lattice model has no secondary structure.
 - **Thermodynamic Energy Landscape** (right): energy after each sweep. A falling
   curve that levels off means the chain settled into a fold.
 - **Diagnostic Evaluation** (bottom), plus the protein's net charge at the chosen pH:
@@ -288,7 +290,7 @@ Every tunable value is a named module constant:
 | Contact energies | `misfold/energy.py` | `HH_EPSILON`, `OTHER_EPSILON`, `COULOMB_K` |
 | Temperature unit, annealing | `misfold/engine.py` | `TEMPERATURE_SCALE`, `ANNEAL_T_START`, `ANNEAL_T_END`, `REFERENCE_SWEEPS` |
 | Diagnosis thresholds | `misfold/diagnostics.py` | `NATIVE_FRACTION`, `DENATURED_UPHILL`, `PH_DENATURATION_OFFSET` |
-| Colours, labels, plot theme | `misfold/plots.py` | `RESIDUE_COLORS`, `RESIDUE_LABELS`, `ENERGY_COLOR`, `BACKGROUND`, `FOREGROUND` |
+| Colours, labels, plot theme | `misfold/plots.py` | `RESIDUE_COLORS`, `RESIDUE_LABELS`, `BACKBONE_CMAP`, `TUBE_RADIUS`, `ENERGY_COLOR`, `BACKGROUND`, `FOREGROUND` |
 | App theme | `.streamlit/config.toml` | `[theme]` (`base = "dark"`) |
 | Icons | `app.py` | `:material/<name>:` strings, `ALERTS` |
 | Slider ranges, defaults, text | `app.py` | widget arguments |

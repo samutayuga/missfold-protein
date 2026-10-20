@@ -1,12 +1,18 @@
 """Matplotlib figure builders. Uses Figure directly so no pyplot state leaks between runs."""
 
 import numpy as np
+from matplotlib.colors import LightSource, LinearSegmentedColormap
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
 RESIDUE_COLORS = {"H": "#FF4B4B", "P": "#1C83E1", "K": "#AB63FA", "D": "#FFA15A"}
 RESIDUE_LABELS = {"H": "Hydrophobic (H)", "P": "Polar (P)", "K": "Basic (K)", "D": "Acidic (D)"}
-BACKBONE_COLOR = "#D3D3D3"
+# VMD NewCartoon-style tube, coloured red -> white -> blue from N- to C-terminus.
+BACKBONE_CMAP = LinearSegmentedColormap.from_list(
+    "backbone_bwr", ["#D03A3A", "#F2F2F2", "#3A48D0"]
+)
+TUBE_RADIUS = 0.16
+TUBE_SIDES = 16
 ENERGY_COLOR = "#00CC96"
 # Match Streamlit's dark theme (.streamlit/config.toml).
 BACKGROUND = "#0E1117"
@@ -52,17 +58,57 @@ def smooth_backbone(coords: np.ndarray, samples_per_bond: int = 12) -> np.ndarra
     return np.vstack(segments)
 
 
+def tube_mesh(
+    curve: np.ndarray, radius: float = TUBE_RADIUS, sides: int = TUBE_SIDES
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Surface grid of a tube around the curve, shape (len(curve), sides + 1) per axis.
+
+    Uses parallel-transported frames so the tube does not twist at lattice corners.
+    """
+    tangents = np.gradient(curve, axis=0)
+    tangents /= np.linalg.norm(tangents, axis=1, keepdims=True)
+    # Any vector not parallel to the first tangent seeds the frame.
+    seed = np.array([0.0, 0.0, 1.0]) if abs(tangents[0, 2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+    normal = np.cross(tangents[0], seed)
+    normal /= np.linalg.norm(normal)
+    normals = [normal]
+    for k in range(1, len(curve)):
+        normal = normals[-1] - np.dot(normals[-1], tangents[k]) * tangents[k]
+        normals.append(normal / np.linalg.norm(normal))
+    normals = np.array(normals)
+    binormals = np.cross(tangents, normals)
+
+    theta = np.linspace(0.0, 2.0 * np.pi, sides + 1)
+    ring = np.cos(theta)[None, :, None] * normals[:, None, :] + np.sin(theta)[None, :, None] * binormals[:, None, :]
+    surface = curve[:, None, :] + radius * ring
+    return surface[..., 0], surface[..., 1], surface[..., 2]
+
+
+def backbone_gradient(m: int) -> np.ndarray:
+    """RGBA colours for m points along the chain, N-terminus (red) to C-terminus (blue)."""
+    return BACKBONE_CMAP(np.linspace(0.0, 1.0, m))
+
+
 def plot_structure(coords: np.ndarray, seq: str, temperature: float, ph: float) -> Figure:
     fig = Figure(figsize=(6, 6))
     ax = fig.add_subplot(111, projection="3d")
     x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
+    # Draw in call order (tube, then beads) so beads are never buried inside the tube.
+    ax.computed_zorder = False
     curve = smooth_backbone(coords)
-    ax.plot(curve[:, 0], curve[:, 1], curve[:, 2], color=BACKBONE_COLOR, lw=3, zorder=1)
+    tx, ty, tz = tube_mesh(curve)
+    colors = np.repeat(backbone_gradient(len(curve))[:, None, :], tx.shape[1], axis=1)
+    ax.plot_surface(
+        tx, ty, tz, facecolors=colors, shade=True, lightsource=LightSource(azdeg=315, altdeg=45),
+        rstride=1, cstride=1, linewidth=0, antialiased=False,
+    )
     ax.scatter(
         x, y, z,
         color=[RESIDUE_COLORS[r] for r in seq],
-        s=150, edgecolors="black", depthshade=False, zorder=2,
+        s=90, edgecolors="black", linewidths=0.8, depthshade=False,
     )
+    for label, point in (("N", coords[0]), ("C", coords[-1])):
+        ax.text(*(point + 0.25), label, color=FOREGROUND, fontsize=11, fontweight="bold")
     ax.set_title(f"Final Simulated State (Temp: {temperature}, pH: {ph})")
     ax.set_box_aspect(np.maximum(np.ptp(coords, axis=0), 1))
 
