@@ -58,3 +58,33 @@ def test_figures_use_dark_theme():
         assert to_hex(ax.get_facecolor()) == BACKGROUND.lower()
         assert to_hex(ax.xaxis.label.get_color()) == FOREGROUND.lower()
         assert to_hex(ax.title.get_color()) == FOREGROUND.lower()
+
+
+def test_smooth_backbone_passes_through_every_bead():
+    from misfold.plots import smooth_backbone
+
+    curve = smooth_backbone(C, samples_per_bond=8)
+    assert curve.shape == (3 * 8 + 1, 3)
+    assert np.allclose(curve[::8], C)
+
+
+def test_smooth_backbone_keeps_straight_chain_straight():
+    from misfold.plots import smooth_backbone
+
+    straight = np.array([[i, 0, 0] for i in range(4)])
+    curve = smooth_backbone(straight)
+    assert np.allclose(curve[:, 1:], 0)
+    assert np.all(np.diff(curve[:, 0]) > 0)
+
+
+def test_smooth_backbone_rounds_corners():
+    from misfold.plots import smooth_backbone
+
+    curve = smooth_backbone(C, samples_per_bond=8)
+    mid_first_bond = curve[4]  # halfway between bead 0 (0,0,0) and bead 1 (1,0,0)
+    assert not np.isclose(mid_first_bond[1], 0)  # bows away from the straight lattice bond
+
+
+def test_structure_draws_smoothed_backbone():
+    ax = plot_structure(C, "HPKD", 1.2, 7.0).axes[0]
+    assert len(ax.lines[0].get_data_3d()[0]) > len(C)

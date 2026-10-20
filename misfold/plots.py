@@ -29,11 +29,35 @@ def _style_dark(fig: Figure, ax) -> None:
         spine.set_color(GRID_COLOR)
 
 
+def smooth_backbone(coords: np.ndarray, samples_per_bond: int = 12) -> np.ndarray:
+    """Catmull-Rom spline through the bead positions, for display only.
+
+    The simulation lives on the cubic lattice; the curve passes exactly through every
+    bead (every samples_per_bond-th point) and rounds the 90° lattice corners so the
+    backbone reads like a protein cartoon.
+    """
+    points = coords.astype(float)
+    # Duplicate the end beads so the first and last bonds have tangents.
+    padded = np.vstack([points[:1], points, points[-1:]])
+    t = np.linspace(0.0, 1.0, samples_per_bond, endpoint=False)[:, None]
+    h00, h10 = 2 * t**3 - 3 * t**2 + 1, t**3 - 2 * t**2 + t
+    h01, h11 = -2 * t**3 + 3 * t**2, t**3 - t**2
+    segments = []
+    for k in range(1, len(padded) - 2):
+        p0, p1 = padded[k], padded[k + 1]
+        m0 = (padded[k + 1] - padded[k - 1]) / 2
+        m1 = (padded[k + 2] - padded[k]) / 2
+        segments.append(h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1)
+    segments.append(points[-1:])
+    return np.vstack(segments)
+
+
 def plot_structure(coords: np.ndarray, seq: str, temperature: float, ph: float) -> Figure:
     fig = Figure(figsize=(6, 6))
     ax = fig.add_subplot(111, projection="3d")
     x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
-    ax.plot(x, y, z, color=BACKBONE_COLOR, lw=3, zorder=1)
+    curve = smooth_backbone(coords)
+    ax.plot(curve[:, 0], curve[:, 1], curve[:, 2], color=BACKBONE_COLOR, lw=3, zorder=1)
     ax.scatter(
         x, y, z,
         color=[RESIDUE_COLORS[r] for r in seq],

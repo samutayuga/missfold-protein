@@ -51,7 +51,10 @@ message in the sidebar and nothing runs.
 ### Output
 
 - **3D Backbone Conformation** (left): beads coloured by residue type (H red, P blue,
-  K purple, D orange) and joined by the backbone. The legend lists only the types
+  K purple, D orange) and joined by the backbone. Beads sit exactly on their lattice
+  sites; the backbone between them is drawn as a smooth Catmull-Rom curve
+  (`smooth_backbone` in `misfold/plots.py`), so the 90° lattice corners read like a
+  protein cartoon. This only affects the drawing, not the physics. The legend lists only the types
   present.
 - **Thermodynamic Energy Landscape** (right): energy after each sweep. A falling
   curve that levels off means the chain settled into a fold.
