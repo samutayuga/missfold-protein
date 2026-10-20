@@ -34,14 +34,14 @@ def classify(
     if native_energy >= 0:
         return Diagnosis(
             None,
-            f"ℹ️ **No stable fold possible.** This sequence cannot form any stabilising "
+            f"**No stable fold possible.** This sequence cannot form any stabilising "
             f"contact (no hydrophobic core or salt bridge), so folding cannot be assessed "
             f"({conditions}; {energies}).",
         )
     if final <= NATIVE_FRACTION * native_energy:
         return Diagnosis(
             Status.NATIVE,
-            f"✅ **Status: {Status.NATIVE.value}**. The simulation safely traversed the free "
+            f"**Status: {Status.NATIVE.value}**. The simulation safely traversed the free "
             f"energy landscape down to a thermodynamic minimum ({conditions}; {energies}).",
         )
     if result.uphill_acceptance >= DENATURED_UPHILL:
@@ -60,12 +60,12 @@ def classify(
             cause = "Thermal noise is too high for the non-covalent contacts to stabilise"
         return Diagnosis(
             Status.DENATURED,
-            f"⚠️ **Status: {Status.DENATURED.value}**. {cause}, leaving the chain as an "
+            f"**Status: {Status.DENATURED.value}**. {cause}, leaving the chain as an "
             f"open random coil ({conditions}; {energies}).",
         )
     return Diagnosis(
         Status.TRAPPED,
-        f"🛑 **Status: {Status.TRAPPED.value}**. The chain lacked the kinetic energy to "
+        f"**Status: {Status.TRAPPED.value}**. The chain lacked the kinetic energy to "
         f"overcome structural energy barriers and is stuck in an irregular, high-energy "
         f"configuration ({conditions}; {energies}).",
     )

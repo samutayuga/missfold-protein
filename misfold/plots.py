@@ -8,6 +8,25 @@ RESIDUE_COLORS = {"H": "#FF4B4B", "P": "#1C83E1", "K": "#AB63FA", "D": "#FFA15A"
 RESIDUE_LABELS = {"H": "Hydrophobic (H)", "P": "Polar (P)", "K": "Basic (K)", "D": "Acidic (D)"}
 BACKBONE_COLOR = "#D3D3D3"
 ENERGY_COLOR = "#00CC96"
+# Match Streamlit's dark theme (.streamlit/config.toml).
+BACKGROUND = "#0E1117"
+FOREGROUND = "#FAFAFA"
+GRID_COLOR = "#3A3F4B"
+
+
+def _style_dark(fig: Figure, ax) -> None:
+    fig.set_facecolor(BACKGROUND)
+    ax.set_facecolor(BACKGROUND)
+    ax.title.set_color(FOREGROUND)
+    axes = [ax.xaxis, ax.yaxis] + ([ax.zaxis] if hasattr(ax, "zaxis") else [])
+    for axis in axes:
+        axis.label.set_color(FOREGROUND)
+        axis.set_tick_params(colors=FOREGROUND)
+        if hasattr(axis, "set_pane_color"):  # 3D panes and their grid lines
+            axis.set_pane_color(BACKGROUND)
+            axis._axinfo["grid"]["color"] = GRID_COLOR
+    for spine in getattr(ax, "spines", {}).values():
+        spine.set_color(GRID_COLOR)
 
 
 def plot_structure(coords: np.ndarray, seq: str, temperature: float, ph: float) -> Figure:
@@ -29,7 +48,10 @@ def plot_structure(coords: np.ndarray, seq: str, temperature: float, ph: float) 
                markerfacecolor=RESIDUE_COLORS[r], label=RESIDUE_LABELS[r])
         for r in present
     ]
-    ax.legend(handles=handles, loc="upper left")
+    legend = ax.legend(handles=handles, loc="upper left", facecolor=BACKGROUND,
+                       edgecolor=GRID_COLOR, labelcolor=FOREGROUND)
+    legend.get_frame().set_alpha(0.9)
+    _style_dark(fig, ax)
     return fig
 
 
@@ -39,5 +61,6 @@ def plot_energy(history: list[float]) -> Figure:
     ax.plot(history, color=ENERGY_COLOR, linewidth=2)
     ax.set_xlabel("Simulation Step / Time")
     ax.set_ylabel("Free Energy (ΔG)")
-    ax.grid(True, linestyle="--", alpha=0.6)
+    ax.grid(True, linestyle="--", alpha=0.6, color=GRID_COLOR)
+    _style_dark(fig, ax)
     return fig

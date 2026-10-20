@@ -57,12 +57,17 @@ message in the sidebar and nothing runs.
   curve that levels off means the chain settled into a fold.
 - **Diagnostic Evaluation** (bottom), plus the protein's net charge at the chosen pH:
 
-| Alert | Status | Typical cause |
+| Alert (Material icon) | Status | Typical cause |
 |---|---|---|
-| ✅ green | Stable Native Fold | Reached within 80 % of the best possible energy |
-| 🛑 red | Severely Misfolded (Kinetic Trap) | Too cold to climb out of a wrong fold |
-| ⚠️ yellow | Denatured | Too hot, or extreme pH broke the salt bridges |
-| ℹ️ blue | No stable fold possible | The sequence has no stabilising contacts at all (e.g. `PPPPP`) |
+| green, `check_circle` | Stable Native Fold | Reached within 80 % of the best possible energy |
+| red, `error` | Severely Misfolded (Kinetic Trap) | Too cold to climb out of a wrong fold |
+| yellow, `warning` | Denatured | Too hot, or extreme pH broke the salt bridges |
+| blue, `info` | No stable fold possible | The sequence has no stabilising contacts at all (e.g. `PPPPP`) |
+
+**Look and feel:** dark theme (`.streamlit/config.toml`), with plots styled to match
+(`BACKGROUND` / `FOREGROUND` in `misfold/plots.py`). Icons are Google Material Symbols,
+the icon set used by Material UI, rendered by Streamlit's built-in
+`:material/<name>:` syntax.
 
 ### Things to try
 
@@ -280,7 +285,9 @@ Every tunable value is a named module constant:
 | Contact energies | `misfold/energy.py` | `HH_EPSILON`, `OTHER_EPSILON`, `COULOMB_K` |
 | Temperature unit, annealing | `misfold/engine.py` | `TEMPERATURE_SCALE`, `ANNEAL_T_START`, `ANNEAL_T_END`, `REFERENCE_SWEEPS` |
 | Diagnosis thresholds | `misfold/diagnostics.py` | `NATIVE_FRACTION`, `DENATURED_UPHILL`, `PH_DENATURATION_OFFSET` |
-| Colours, labels | `misfold/plots.py` | `RESIDUE_COLORS`, `RESIDUE_LABELS`, `ENERGY_COLOR` |
+| Colours, labels, plot theme | `misfold/plots.py` | `RESIDUE_COLORS`, `RESIDUE_LABELS`, `ENERGY_COLOR`, `BACKGROUND`, `FOREGROUND` |
+| App theme | `.streamlit/config.toml` | `[theme]` (`base = "dark"`) |
+| Icons | `app.py` | `:material/<name>:` strings, `ALERTS` |
 | Slider ranges, defaults, text | `app.py` | widget arguments |
 
 After changing any physics constant, run

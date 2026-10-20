@@ -47,3 +47,14 @@ def test_no_pyplot_figures_leak():
     plot_structure(C, "HPKD", 1.0, 7.0)
     plot_energy([0.0])
     assert plt.get_fignums() == []
+
+
+def test_figures_use_dark_theme():
+    from misfold.plots import BACKGROUND, FOREGROUND
+
+    for fig in (plot_structure(C, "HPKD", 1.2, 7.0), plot_energy([0.0, -1.0])):
+        ax = fig.axes[0]
+        assert to_hex(fig.get_facecolor()) == BACKGROUND.lower()
+        assert to_hex(ax.get_facecolor()) == BACKGROUND.lower()
+        assert to_hex(ax.xaxis.label.get_color()) == FOREGROUND.lower()
+        assert to_hex(ax.title.get_color()) == FOREGROUND.lower()

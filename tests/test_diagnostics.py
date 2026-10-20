@@ -71,3 +71,10 @@ def test_calibration(seq, t, ph, expected):
 def test_no_charged_residues_never_blames_ph(ph, word):
     m = classify(_r(-0.5, 60), -4.5, 4.5, ph, "HHPHPHPHPHHPH").message
     assert word not in m.lower() and "thermal" in m.lower()
+
+
+@pytest.mark.parametrize("final, up, ref", [(-4.0, 10, -4.5), (-0.5, 60, -4.5), (-1.0, 5, -4.5), (0.0, 5, 0.0)])
+def test_messages_have_no_emoji(final, up, ref):
+    # Icons come from Material Symbols in the UI, not emoji in the text.
+    m = classify(_r(final, up), ref, 1.2, 7.0, "HKHPHDH").message
+    assert all(ord(ch) < 0x2100 for ch in m)

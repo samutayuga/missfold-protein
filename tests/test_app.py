@@ -53,3 +53,11 @@ def test_no_core_sequence_shows_info():
     at = _run(seq="PPPPP")
     assert not at.exception
     assert len(at.info) == 1
+
+
+def test_uses_material_icons():
+    at = _run()
+    assert at.title[0].value.startswith(":material/")
+    alerts = list(at.error) + list(at.warning) + list(at.success) + list(at.info)
+    assert alerts[0].icon.startswith(":material/")
+    assert all(s.value.startswith(":material/") for s in at.subheader)
