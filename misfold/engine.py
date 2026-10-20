@@ -16,6 +16,7 @@ TEMPERATURE_SCALE = 6.0
 # Annealing schedule, in effective (already scaled) temperature.
 ANNEAL_T_START = 2.0
 ANNEAL_T_END = 0.1
+REFERENCE_SWEEPS = 1500
 
 
 @dataclass(frozen=True)
@@ -91,8 +92,13 @@ def simulate(
 
 
 def reference_energy(
-    seq: str, ph: float = NEUTRAL_PH, steps: int = 20_000, seed: int = 0
+    seq: str, ph: float = NEUTRAL_PH, sweeps: int = REFERENCE_SWEEPS, seed: int = 0
 ) -> float:
-    schedule = np.geomspace(ANNEAL_T_START, ANNEAL_T_END, steps)
-    _, lowest = _run(interaction_matrix(seq, ph), len(seq), schedule, np.random.default_rng(seed))
+    """Simulated annealing optimum; the budget is in sweeps so long chains get as many
+    proposals per residue as short ones."""
+    schedule = np.geomspace(ANNEAL_T_START, ANNEAL_T_END, sweeps)
+    _, lowest = _run(
+        interaction_matrix(seq, ph), len(seq), schedule, np.random.default_rng(seed),
+        proposals_per_step=len(seq),
+    )
     return lowest

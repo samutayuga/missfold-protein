@@ -24,7 +24,7 @@ class Diagnosis:
 
 
 def classify(
-    result: SimulationResult, native_energy: float, temperature: float, ph: float
+    result: SimulationResult, native_energy: float, temperature: float, ph: float, seq: str
 ) -> Diagnosis:
     """native_energy is the annealed optimum at neutral pH, the native-condition benchmark."""
     final = result.energy_history[-1]
@@ -45,12 +45,13 @@ def classify(
             f"energy landscape down to a thermodynamic minimum ({conditions}; {energies}).",
         )
     if result.uphill_acceptance >= DENATURED_UPHILL:
-        if ph - NEUTRAL_PH <= -PH_DENATURATION_OFFSET:
+        # Blame pH only when the residues it neutralises are actually present.
+        if ph - NEUTRAL_PH <= -PH_DENATURATION_OFFSET and "D" in seq:
             cause = (
                 "Acid denaturation: acidic residues lose their charge, salt bridges break "
                 "and basic residues repel each other"
             )
-        elif ph - NEUTRAL_PH >= PH_DENATURATION_OFFSET:
+        elif ph - NEUTRAL_PH >= PH_DENATURATION_OFFSET and "K" in seq:
             cause = (
                 "Base denaturation: basic residues lose their charge, salt bridges break "
                 "and acidic residues repel each other"

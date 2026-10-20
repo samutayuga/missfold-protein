@@ -19,15 +19,15 @@ def test_rejects_invalid_characters(raw):
         validate_sequence(raw)
 
 
-@pytest.mark.parametrize("raw", ["", "HP", "H" * 61])
+@pytest.mark.parametrize("raw", ["", "HP", "H" * 21])
 def test_rejects_bad_length(raw):
-    with pytest.raises(SequenceError, match="between 3 and 60"):
+    with pytest.raises(SequenceError, match="between 3 and 20"):
         validate_sequence(raw)
 
 
 def test_boundary_lengths_accepted():
     assert len(validate_sequence("HPH")) == 3
-    assert len(validate_sequence("H" * 60)) == 60
+    assert len(validate_sequence("H" * 20)) == 20
 
 
 def test_charges_at_neutral_and_pka():

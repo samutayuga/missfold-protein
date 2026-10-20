@@ -57,6 +57,6 @@ if st.sidebar.button("Run 3D Simulation"):
         st.pyplot(plot_energy(result.energy_history))
 
     st.subheader("Diagnostic Evaluation")
-    diagnosis = classify(result, reference, temp, ph)
+    diagnosis = classify(result, reference, temp, ph, sequence)
     ALERTS[diagnosis.status](diagnosis.message)
     st.caption(f"Net charge at pH {ph}: {net_charge(sequence, ph):+.2f}")

@@ -3,7 +3,7 @@
 import numpy as np
 
 MIN_LENGTH = 3
-MAX_LENGTH = 60
+MAX_LENGTH = 20  # beyond ~20 residues the local move set cannot fold within 1000 sweeps
 ALPHABET = "HPKD"
 PKA_ACID = 3.9
 PKA_BASE = 10.5

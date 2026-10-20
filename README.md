@@ -19,7 +19,8 @@ python3 -m venv .venv
 ## Model
 
 - **Alphabet:** `H` hydrophobic, `P` polar, `K` basic (pKa 10.5), `D` acidic (pKa 3.9).
-  Sequences are 3–60 residues.
+  Sequences are 3–20 residues: beyond about 20, the local move set below cannot
+  reach the native fold within the app's step range, so every run would read as a trap.
 - **Energy:** sum over non-bonded lattice contacts: `-1.0` for H–H, `0.5·qᵢ·qⱼ` for
   two charged residues, `+0.1` otherwise. Charges follow Henderson–Hasselbalch, so at
   pH 7 a K–D contact is a `-0.5` salt bridge; at low pH D is neutralised (bridges
@@ -31,11 +32,12 @@ python3 -m venv .venv
   folding transition where the spec places it: roughly T < 0.5 traps, T ≈ 1.2 folds,
   T > 3 denatures.
 - **Diagnosis** comes from the run's data, not the slider values. Each run is compared
-  with the best energy found by simulated annealing at **pH 7** (cached per sequence):
+  with the best energy found by simulated annealing at **pH 7** (1500 sweeps, cached
+  per sequence):
   - final energy ≤ 80 % of that optimum → *Stable Native Fold*;
   - otherwise, if ≥ 25 % of energy-raising moves were accepted (the chain is
-    thermally agitated) → *Denatured*, attributed to acid/base when pH is ≥ 3 units
-    from neutral;
+    thermally agitated) → *Denatured*, attributed to acid (base) when pH is ≥ 3 units
+    below (above) neutral and the sequence contains D (K); otherwise to heat;
   - otherwise → *Severely Misfolded (Kinetic Trap)*.
   - Sequences that cannot form any stabilising contact get an info message instead.
 

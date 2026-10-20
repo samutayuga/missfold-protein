@@ -52,7 +52,7 @@ def test_low_ph_raises_reference_energy():  # salt bridges lost
 
 
 def test_max_length_is_interactive():
-    seq = "HKPD" * 15
+    seq = "HKPD" * 5
     t0 = time.perf_counter()
     simulate(seq, 1.2, 7.0, 1000, np.random.default_rng(0))
     reference_energy(seq)
@@ -70,3 +70,9 @@ def test_uphill_acceptance_tracks_temperature():
     hot = simulate(SEQ, 4.5, 7.0, 300, np.random.default_rng(0))
     assert cold.uphill_attempted > 0 and hot.uphill_attempted > 0
     assert cold.uphill_acceptance < 0.05 < hot.uphill_acceptance
+
+
+def test_reference_energy_budget_scales_with_length():
+    # A fixed proposal budget left long chains far above their optimum
+    # (30-mer: -13.2 vs -18.1 from a 10x longer anneal).
+    assert reference_energy((SEQ * 3)[:30]) <= -17.0
