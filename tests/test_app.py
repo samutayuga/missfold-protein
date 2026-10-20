@@ -66,3 +66,17 @@ def test_uses_material_icons():
     alerts = list(at.error) + list(at.warning) + list(at.success) + list(at.info)
     assert alerts[0].icon.startswith(":material/")
     assert all(s.value.startswith(":material/") for s in at.subheader)
+
+
+def test_ph_sweep_tab_plots_size_vs_ph():
+    at = AppTest.from_file(APP, default_timeout=120).run()
+    assert [t.label for t in at.tabs] == [":material/view_in_ar: Simulation", ":material/ssid_chart: pH vs Size"]
+    at.tabs[1].button[0].click().run()
+    assert not at.exception
+    assert len(at.tabs[1].get("imgs")) + len(at.tabs[1].get("image")) >= 1
+
+
+def test_sweep_keeps_simulation_results():
+    at = _run()
+    at.tabs[1].button[0].click().run()
+    assert _diagnoses(at) == 1

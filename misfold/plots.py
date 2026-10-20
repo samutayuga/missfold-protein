@@ -134,3 +134,17 @@ def plot_energy(history: list[float]) -> Figure:
     ax.grid(True, linestyle="--", alpha=0.6, color=GRID_COLOR)
     _style_dark(fig, ax)
     return fig
+
+
+def plot_size_vs_ph(ph: np.ndarray, mean_rg: np.ndarray, std_rg: np.ndarray, current_ph: float) -> Figure:
+    fig = Figure(figsize=(9, 4.5))
+    ax = fig.add_subplot(111)
+    ax.fill_between(ph, mean_rg - std_rg, mean_rg + std_rg, color=ENERGY_COLOR, alpha=0.2, linewidth=0)
+    ax.plot(ph, mean_rg, color=ENERGY_COLOR, linewidth=2, marker="o", markersize=5)
+    ax.axvline(current_ph, color=FOREGROUND, linestyle=":", linewidth=1, alpha=0.7)
+    ax.set_xlim(0, 14)
+    ax.set_xlabel("Solution pH")
+    ax.set_ylabel("Radius of Gyration (lattice units)")
+    ax.grid(True, linestyle="--", alpha=0.6, color=GRID_COLOR)
+    _style_dark(fig, ax)
+    return fig

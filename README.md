@@ -50,6 +50,10 @@ message in the sidebar and nothing runs.
 
 ### Output
 
+The page has two tabs.
+
+#### Simulation tab
+
 - **3D Backbone Conformation** (left): the chain is drawn in the style of VMD's
   NewCartoon (as on the [UIUC protein-folding pages](https://www.ks.uiuc.edu/Research/folding/)):
   a shaded tube coloured red → white → blue from the N-terminus to the C-terminus,
@@ -69,6 +73,26 @@ message in the sidebar and nothing runs.
 | yellow, `warning` | Denatured | Too hot, or extreme pH broke the salt bridges |
 | blue, `info` | No stable fold possible | The sequence has no stabilising contacts at all (e.g. `PPPPP`) |
 
+#### pH vs Size tab
+
+Press **Run pH Sweep** to plot particle size against pH (0–14 in steps of 1) for the
+sidebar sequence, temperature and step count. Size is the radius of gyration
+
+$$R_g = \sqrt{\frac{1}{n}\sum_{i=1}^{n} \lVert \mathbf{r}_i - \bar{\mathbf{r}} \rVert^2}$$
+
+of the final conformation, averaged over 6 independent runs per pH (`ph_sweep` in
+`misfold/sweep.py`). The shaded band is ±1 standard deviation; the dotted line marks
+the sidebar pH. The sweep uses a fixed seed and is cached, so the same settings
+redraw the same curve. It runs 90 simulations, so it takes a few seconds (longer at
+1000 steps).
+
+A charged sequence such as `KDKDHHKDKDHHKD` gives a U-shape: compact
+($R_g \approx 1.2$) between pH 5 and 10 where the salt bridges hold, swelling to
+$R_g \approx 1.6$ below pKa 3.9 (D neutralised) and above pKa 10.5 (K neutralised).
+An H-rich sequence stays flat because its core does not depend on charge.
+
+Simulation results stay on screen when you run a sweep, and vice versa.
+
 **Look and feel:** dark theme (`.streamlit/config.toml`), with plots styled to match
 (`BACKGROUND` / `FOREGROUND` in `misfold/plots.py`). The app icon (browser tab, sidebar
 logo, next to the title) is an original render of a chain that is half folded into a
@@ -87,6 +111,7 @@ Streamlit's built-in `:material/<name>:` syntax.
 | Acid denaturation | sequence `KDKDHHKDKDHHKD`, pH 2.0 | Denatured (folds at pH 7) |
 | Base denaturation | same sequence, pH 12.5 | Denatured (K loses its charge) |
 | No core | `PPPPP` | info message |
+| Size vs pH | `KDKDHHKDKDHHKD`, pH vs Size tab | U-shaped curve, swelling at both pH extremes |
 
 Runs are random: the same settings can give different outcomes. Run a few times to
 see the trend.
@@ -101,7 +126,7 @@ flowchart TD
 
     subgraph UI["app.py (Streamlit UI only)"]
         APP[Sidebar controls and Run button]
-        CACHE[["native_energy(seq)<br/>@st.cache_data"]]
+        CACHE[["native_energy · size_vs_ph<br/>@st.cache_data"]]
         VIEW[Columns: 3D plot, energy plot<br/>Diagnostic alert and net charge]
     end
 
@@ -111,12 +136,15 @@ flowchart TD
         LAT["lattice.py<br/>straight_chain · propose_move · is_valid_chain"]
         ENG["engine.py<br/>simulate · reference_energy · SimulationResult"]
         DIA["diagnostics.py<br/>classify → Diagnosis(Status, message)"]
-        PLT["plots.py<br/>plot_structure · plot_energy"]
+        PLT["plots.py<br/>plot_structure · plot_energy · plot_size_vs_ph"]
+        SWP["sweep.py<br/>ph_sweep → SweepResult"]
     end
 
     APP --> SEQ
     APP --> ENG
     APP --> CACHE --> ENG
+    CACHE --> SWP --> ENG
+    SWP -->|R_g per pH| PLT
     SEQ --> EN
     EN --> ENG
     LAT --> ENG

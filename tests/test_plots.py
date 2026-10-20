@@ -114,3 +114,15 @@ def test_backbone_gradient_red_white_blue():
     assert start[0] > 0.7 and start[2] < 0.35  # red at the N-terminus
     assert min(middle[:3]) > 0.85  # near white mid-chain
     assert end[2] > 0.7 and end[0] < 0.35  # blue at the C-terminus
+
+
+def test_size_vs_ph_plot():
+    from misfold.plots import plot_size_vs_ph
+
+    fig = plot_size_vs_ph(np.array([2.0, 7.0, 12.0]), np.array([1.5, 1.2, 1.5]),
+                          np.array([0.1, 0.05, 0.1]), current_ph=7.0)
+    ax = fig.axes[0]
+    assert ax.get_xlabel() == "Solution pH"
+    assert "Radius of Gyration" in ax.get_ylabel()
+    assert ax.get_xlim()[0] <= 0 and ax.get_xlim()[1] >= 14
+    assert fig.get_facecolor()[:3] == pytest.approx((14 / 255, 17 / 255, 23 / 255), abs=1e-2)
