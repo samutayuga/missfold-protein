@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "misfold"
+version = "0.1.0"
+description = "3D HP-lattice protein misfolding simulator with temperature and pH"
+requires-python = ">=3.10"
+dependencies = ["streamlit", "numpy", "matplotlib"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["misfold"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
