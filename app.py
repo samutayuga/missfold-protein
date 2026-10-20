@@ -1,5 +1,7 @@
 """Streamlit dashboard for the 3D protein misfolding simulator."""
 
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
 
@@ -7,6 +9,9 @@ from misfold.diagnostics import Status, classify
 from misfold.engine import reference_energy, simulate
 from misfold.plots import plot_energy, plot_structure
 from misfold.sequence import SequenceError, net_charge, validate_sequence
+
+# Original icon rendered by scripts/make_icon.py (half helix, half unravelled chain).
+ICON = str(Path(__file__).resolve().parent / "assets" / "icon.png")
 
 # Alert widget and Material Symbols icon per diagnosis.
 ALERTS = {
@@ -24,9 +29,12 @@ def native_energy(seq: str) -> float:
 
 
 st.set_page_config(
-    page_title="3D Protein Misfolding Simulator", page_icon=":material/genetics:", layout="wide"
+    page_title="3D Protein Misfolding Simulator", page_icon=ICON, layout="wide"
 )
-st.title(":material/genetics: 3D Protein Misfolding & Energy Landscape Simulator")
+st.logo(ICON, size="large")
+icon_col, title_col = st.columns([1, 12], vertical_alignment="center")
+icon_col.image(ICON, width=72)
+title_col.title("3D Protein Misfolding & Energy Landscape Simulator")
 st.write(
     "Explore how temperature and pH trap proteins in misfolded, toxic configurations "
     "or unfold them entirely."

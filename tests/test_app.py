@@ -55,9 +55,14 @@ def test_no_core_sequence_shows_info():
     assert len(at.info) == 1
 
 
+def test_shows_app_icon_next_to_title():
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert at.title[0].value == "3D Protein Misfolding & Energy Landscape Simulator"
+    assert len(at.get("image")) == 1
+
+
 def test_uses_material_icons():
     at = _run()
-    assert at.title[0].value.startswith(":material/")
     alerts = list(at.error) + list(at.warning) + list(at.success) + list(at.info)
     assert alerts[0].icon.startswith(":material/")
     assert all(s.value.startswith(":material/") for s in at.subheader)
